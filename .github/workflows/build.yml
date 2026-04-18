@@ -1,0 +1,21 @@
+name: Build CogniPDF Installers
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CogniPDF-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/dmg/*.dmg
