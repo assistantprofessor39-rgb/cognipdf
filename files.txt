@@ -1,0 +1,91 @@
+=== FILE 1: package.json ===
+{
+  "name": "cognipdf",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.4",
+    "three": "^0.167.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.167.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  }
+}
+
+=== FILE 2:.github/workflows/build.yml ===
+name: Build CogniPDF Installers
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CogniPDF-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/dmg/*.dmg
+
+=== FILE 3: src-tauri/Cargo.toml ===
+[package]
+name = "cognipdf"
+version = "0.1.0"
+edition = "2021"
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+pdf-extract = "0.7"
+fastembed = { version = "3", features = ["online"] }
+lancedb = "0.9"
+
+=== FILE 4: src-tauri/tauri.conf.json ===
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CogniPDF",
+  "version": "0.1.0",
+  "identifier": "com.cognipdf.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": { "windows": [{ "title": "CogniPDF", "width": 1200, "height": 800 }], "security": { "csp": null } },
+  "bundle": { "active": true, "targets": "all" }
+}
+
+=== STOP HERE FOR NOW ===
